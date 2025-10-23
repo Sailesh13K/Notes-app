@@ -17,7 +17,7 @@ const Login = () => {
         password,
       });
       if (response.data.success) {
-        login(response.data.user);
+        login(response.data.user, response.data.token);
         sessionStorage.setItem("token", response.data.token);
         sessionStorage.setItem("userName", response.data.user.name);
         navigate("/");

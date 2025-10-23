@@ -7,26 +7,30 @@ import { toast } from "react-toastify";
 import { useAuth } from "../context/ContextProvider.jsx";
 
 function Home() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [isModelOpen, setModelOpen] = useState(false);
   const [notes, setNotes] = useState([]);
   const [filteredNotes, setFilteredNotes] = useState([]);
   const [currNote, setCurrNote] = useState(null);
   const [query, setQuery] = useState("");
+  const [loading, setLoading] = useState(false);
   const API = import.meta.env.VITE_API_BASE_URL;
 
   const token = sessionStorage.getItem("token");
 
   const fetchNotes = async () => {
-    if (!token) return; // Only fetch if logged-in
+    if (!token) return;
 
     try {
+      setLoading(true);
       const { data } = await axios.get(`${API}/api/note`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setNotes(data.notes);
+      setLoading(false);
     } catch (error) {
       console.log("Error fetching notes:", error.message);
+      setLoading(false);
     }
   };
 
@@ -103,13 +107,24 @@ function Home() {
       console.error("Error editing note:", error.message);
     }
   };
-
+  if (authLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-gray-100">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-teal-500"></div>
+      </div>
+    );
+  }
   return (
     <div className="bg-gray-100 min-h-screen">
       <Navbar setQuery={setQuery} />
-      <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 ">
+
+      <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3">
         {user ? (
-          filteredNotes.length > 0 ? (
+          loading ? (
+            <div className="flex justify-center items-center col-span-full mt-10">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-teal-500"></div>
+            </div>
+          ) : filteredNotes.length > 0 ? (
             filteredNotes.map((note) => (
               <NoteCard
                 key={note._id}
@@ -119,7 +134,9 @@ function Home() {
               />
             ))
           ) : (
-            <p className="m-4">No notes found</p>
+            <p className="m-4 col-span-full text-center text-gray-600">
+              No notes found
+            </p>
           )
         ) : (
           <div className="flex flex-col items-center justify-center min-h-[70vh] text-center col-span-full">
